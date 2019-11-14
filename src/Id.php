@@ -1,35 +1,32 @@
 <?php
-namespace Wamania\BrewSearch\Catalog\Dictionary;
 
-use Wamania\BrewSearch\Catalog\CatalogConst as CC;
-use Wamania\BrewSearch\Utils\Utils;
-use Wamania\BrewSearch\File\PhysicalFile;
-use Wamania\BrewSearch\File\MemoryFile;
-use Wamania\BrewSearch\File\File;
+namespace Wamania\BrewSearch\Dictionary;
+
+use Wamania\BrewSearch\Dictionary\Constant as CC;
+use Wamania\BrewSearch\Dictionary\File\File;
+use Wamania\BrewSearch\Dictionary\File\PhysicalFile;
+use Wamania\BrewSearch\Dictionary\Utils\Utils;
 
 class Id
 {
+    /** @var int */
     protected $id;
 
+    /** @var bool  */
     protected $isModified;
 
+    /** @var PhysicalFile */
     protected $file;
-
-    protected $options;
 
     /**
      * Constructor
      * @param string $filePath
      */
-    public function __construct($filePath, $options)
+    public function __construct($filePath)
     {
-        $this->isModified   = false;
-        $this->id           = null;
-        //$this->file         = new MemoryFile($filePath);
-
-        $this->options = array_merge($options, array('file' => 'memory'));
-
-        $this->file = File::factory($this->options['file'], $filePath);
+        $this->isModified = false;
+        $this->id = null;
+        $this->file = File::factory('physical', $filePath);
     }
 
     /**
@@ -47,13 +44,6 @@ class Id
         }
     }
 
-    public function load()
-    {
-        $this->file->seek(0);
-        $value = $this->file->readBytes(CC::ID_BYTES);
-        $this->id = Utils::unpack($value, CC::ID_BYTES);
-    }
-
     /**
      * Get current id of the BrewString
      */
@@ -66,11 +56,17 @@ class Id
         return $this->id;
     }
 
+    public function load()
+    {
+        $this->file->seek(0);
+        $value = $this->file->readBytes(CC::ID_BYTES);
+        $this->id = Utils::unpack($value, CC::ID_BYTES);
+    }
+
     /**
      * Set current id of the BrewString
-     * @param int $id
      */
-    public function increment()
+    public function increment(): int
     {
         if (null === $this->id) {
             $this->load();
@@ -82,13 +78,12 @@ class Id
         return $this->id;
     }
 
-    public function flush()
+    public function flush(): void
     {
         if ($this->isModified) {
             $this->file->seek(0);
             $value = Utils::pack($this->id, CC::ID_BYTES);
-            return $this->file->writeBytes($value);
+            $this->file->writeBytes($value);
         }
-        return true;
     }
 }
