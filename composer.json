@@ -1,0 +1,16 @@
+{
+  "name": "wamania/brewsearch-dictionary",
+  "description": "A dictionary in PHP that allow that save and get back an id for a specific word",
+  "license": "mit",
+  "require": {
+    "php": ">=7.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Wamania\\BrewSearch\\Dictionary": "src/"
+    }
+  },
+  "require-dev": {
+    "symfony/var-dumper": "^4.3"
+  }
+}
