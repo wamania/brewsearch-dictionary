@@ -1,10 +1,10 @@
 <?php
 namespace Wamania\BrewSearch\Dictionary\File;
 
-class MemoryFile extends File
+class MemoryFile extends AbstractFile implements FileInterface
 {
-    /** The file content if loaded
-     *
+    /**
+     * The file content if loaded
      * @var string
      */
     protected $content;
@@ -21,11 +21,7 @@ class MemoryFile extends File
      */
     protected $pointer;
 
-    /**
-     * Constructor
-     * @param string $filePath
-     */
-    public function __construct($filePath)
+    public function __construct(string $filePath)
     {
         parent::__construct($filePath);
 
@@ -34,77 +30,50 @@ class MemoryFile extends File
         $this->isModified = false;
     }
 
-    public function open()
+    public function open(): void
     {
         $this->content = file_get_contents($this->filePath);
     }
 
-    public function close()
+    public function close(): void
     {
         $this->content = null;
     }
 
-    public function flush()
+    public function flush(): void
     {
         if ($this->isModified) {
             file_put_contents($this->filePath, $this->content);
         }
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->content = '';
         $this->pointer = 0;
     }
 
-    /**
-     * Get file size
-     *
-     * @return int
-     */
-    public function getFilesize()
+    public function getFilesize(): int
     {
         return strlen($this->content);
     }
 
-    /**
-     * Seeks on a file pointer
-     *
-     * @param  int $position
-     * @return bool
-     */
-    public function seek($position)
+    public function seek(int $position): void
     {
         $this->pointer = $position;
     }
 
-    /**
-     * Seek to the end
-     *
-     * @return number
-     */
-    public function seekToEnd()
+    public function seekToEnd(): void
     {
         $this->pointer = $this->getFilesize();
     }
 
-    /**
-     * Return current position of pointer in file
-     *
-     * @return int
-     */
-    public function getPosition()
+    public function getCurrentPosition(): int
     {
         return $this->pointer;
     }
 
-    /**
-     * Lit et retourne un nombre $size d'octet et converti en int (S,V) ou char (C)
-     *
-     * @param  integer $size Taille en octet
-     * @return integer|string
-     */
-    public function readBytes($size)
+    public function readBytes(int $size): string
     {
         $read = substr($this->content, $this->pointer, $size);
         $this->pointer += $size;
@@ -112,43 +81,21 @@ class MemoryFile extends File
         return $read;
     }
 
-    /**
-     * Write string
-     *
-     * @param string $string
-     */
-    public function writeAtEnd($string)
+    public function writeAtEnd(string $bytes): void
     {
         $this->isModified = true;
-        $this->pointer += strlen($string);
+        $this->pointer += strlen($bytes);
 
-        $this->content .= $string;
+        $this->content .= $bytes;
     }
 
-    /**
-     * Write $size octets packed
-     *
-     * @param  [type] $value [description]
-     * @param  [type] $size  [description]
-     * @return [type]        [description]
-     */
-    public function writeBytes($value)
+    public function writeBytes(string $bytes): void
     {
         $this->isModified = true;
-        $size = strlen($value);
+        $size = strlen($bytes);
 
-        $this->content = substr_replace($this->content, $value, $this->pointer, $size);
+        $this->content = substr_replace($this->content, $bytes, $this->pointer, $size);
 
         $this->pointer += $size;
-    }
-
-    /**
-     * Destructor
-     */
-    public function __destruct()
-    {
-        /*if ($this->isModified) {
-            $this->close();
-        }*/
     }
 }

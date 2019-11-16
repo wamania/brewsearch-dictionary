@@ -5,28 +5,38 @@ namespace Wamania\BrewSearch\Dictionary;
 class Constant
 {
     /**
-     * Taille de l'annuaire sur 8bits
+     * Size (in bytes) of the size of the annuaire
+     * (annuaire size is dynamic)
+     *
+     * @var integer
      */
     const ANNUAIRE_SIZE_BYTES = 1;
 
     /**
-     * Lettres sur 16bits
+     * Size of each letter (in bytes)
+     *
+     * @var integer
      */
     const LETTER_BYTES = 2;
 
     /**
-     * Position des lettres sur 32bits
+     * Size of the position of a letter (in bytes)
+     *
+     * @var integer
      */
     const LETTER_POSITION_BYTES = 4;
 
     /**
-     * Id sur 32bits
-     * @SwitchBoard
+     * Size the id (in bytes)
+     *
+     * @var integer
      */
     const ID_BYTES = 4;
 
     /**
-     * Next part of annuaire sur 32bits
+     * Size of the position of the next part (in bytes)
+     *
+     * @var integer
      */
     const NEXT_PART_BYTES = 4;
 
@@ -35,6 +45,7 @@ class Constant
      *	+ self::LETTER_BYTES + self::LETTER_POSITION_BYTES
      *	+ self::ID_BYTES
      *	+ self::NEXT_PART_BYTES
+     *
      * @var integer
      */
     const FULL_STAGE_PART_SIZE = 15;

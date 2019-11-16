@@ -1,31 +1,20 @@
 <?php
+
 namespace Wamania\BrewSearch\Dictionary\File;
 
-abstract class File
+abstract class AbstractFile
 {
     /**
-     * The file path
      * @var string
      */
     protected $filePath;
 
-    /**
-     * Constructor
-     * @param string $filePath
-     */
     public function __construct($filePath)
     {
         $this->filePath 	= $filePath;
     }
 
-    /**
-     * Return a File object
-     *
-     * @param string $type
-     * @param string $filePath
-     * @return File
-     */
-    public static function factory($type, $filePath)
+    public static function factory(string $type, string $filePath): FileInterface
     {
         $className = 'Wamania\BrewSearch\Dictionary\File\\'.ucwords($type).'File';
         if (! class_exists($className)) {
@@ -34,10 +23,7 @@ abstract class File
         return new $className($filePath);
     }
 
-    /**
-     * Init file (create it if not exists)
-     */
-    public function init()
+    public function init(): void
     {
         if (! file_exists($this->filePath)) {
             touch($this->filePath);

@@ -22,100 +22,73 @@ class Dictionary
 
         $this->switchBoard = new SwitchBoard(
             $folder . DIRECTORY_SEPARATOR
-            . 'dictionary' . DIRECTORY_SEPARATOR
             . 'switchboard.bin');
 
         $this->id = new Id(
             $folder . DIRECTORY_SEPARATOR
-            . 'dictionary' . DIRECTORY_SEPARATOR
             . 'autoincrement.bin');
     }
 
-    public function init()
+    public function init(): void
     {
-        if (!is_dir($this->folder . DIRECTORY_SEPARATOR . 'dictionary')) {
-            mkdir($this->folder . DIRECTORY_SEPARATOR . 'dictionary', 0777, true);
+        if (!is_dir($this->folder)) {
+            mkdir($this->folder, 0777, true);
         }
 
         $this->switchBoard->init();
         $this->id->init();
     }
 
-    public function load()
+    public function load(): void
     {
         $this->switchBoard->load();
         $this->id->load();
     }
-
-    /*public function search($word)
-    {
-        $chars = unpack('C*', $word);
-        // we reindex to begun at index 0
-        $chars = array_values($chars);
-
-        $lastFound = $this->switchBoard->scan($chars);
-
-        // word found
-        if ($lastFound['charsIndex'] == count($chars)) {
-            $stage = new Stage($this->switchBoard, $lastFound['index']);
-            $id = $stage->getFirstPart()->getId();
-
-            return $id;
-        }
-
-        return null;
-    }*/
 
     public function process(string $word): int
     {
         $chars = unpack('C*', $word);
         $chars = array_values($chars);
 
-        /*if ( (isset($this->options['min_length'])) && (count($chars) < $this->options['min_length']) ) {
-            return null;
-        }*/
-
-        // pour chaque chars, on va checker s'il est déjà dedans
-        // lastFound va contenir la position du dernier stage trouvé pour le mot et la position dans $chars
-        //$start = microtime(1);
+        // we scan le switchboard file to try to find each letter
+        // lastFound contains the index of the last stage found
+        // and the corresponding index in the $chars array
         $lastFound = $this->switchBoard->scan($chars);
 
         if ($lastFound['charsIndex'] == count($chars)) {
 
-            // on charge le Stage qu'on vient de trouver
+            // on load the stage we have found
             $stage = new Stage($this->switchBoard, $lastFound['index']);
 
-            // enfin l'id du 1er StagePart
-            $id = (int)$stage->getFirstPart()->getId();
+            // get the id
+            $id = $stage->getFirstPart()->getId();
 
-            // sinon, reste des stages à insérer
         } else {
 
             // Un 1ier stagepart pour compléter l'annuaire de la dernière lettre trouvée
             // le stage existe déjà, on a donc déjà un 1er StagePart avec un id
             $stage = new Stage($this->switchBoard, $lastFound['index']);
-            $stage->addPart(array(
+            $stage->addPart([
                 $chars[$lastFound['charsIndex']] => ($this->switchBoard->lastIndex() + CC::FULL_STAGE_PART_SIZE)
-            ), 0);
+            ], 0);
 
             // tous les nouveaux Stage et pour chacun une StagePart, à la fin et avec un id
             $stage = new Stage($this->switchBoard);
             for ($i = ($lastFound['charsIndex'] + 1); $i < count($chars); $i++) {
 
-                // le dernier Id +1
+                // last id +1
                 $id = $this->id->increment();
 
-                $stage->addPart(array(
+                $stage->addPart([
                     $chars[$i] => ($this->switchBoard->lastIndex() + CC::FULL_STAGE_PART_SIZE)
-                ), $id);
+                ], $id);
             }
 
-            // le dernier Id +1
-            $id = (int)$this->id->increment();
-            //$this->id->flush();
+            // last id +1
+            $id = $this->id->increment();
 
             // le dernier stage, ne contient qu'un id
-            $stage->addPart(null, $id);
+            $stage->addPart([], $id);
         }
 
         return $id;

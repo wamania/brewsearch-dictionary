@@ -3,20 +3,14 @@
 namespace Wamania\BrewSearch\Dictionary\Stage;
 
 use Wamania\BrewSearch\Dictionary\Constant as CC;
-use Wamania\BrewSearch\Dictionary\Utils\Utils;
+use Wamania\BrewSearch\Dictionary\Utils\Pack;
 
 class StagePartFormater
 {
-    /**
-     * Taille de l'annuaire
-     * @var integer
-     */
+    /** @var integer */
     private $annuaireSize;
 
-    /**
-     * Annuaire
-     * @var array
-     */
+    /** @var array */
     private $annuaire;
 
     /**
@@ -31,9 +25,6 @@ class StagePartFormater
      */
     private $next;
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->annuaireSize = 0;
@@ -42,62 +33,42 @@ class StagePartFormater
         $this->next = 0;
     }
 
-    public function getAnnuaireSize()
-    {
-        return $this->annuaireSize;
-    }
-
-    public function getAnnuaire()
-    {
-        return $this->annuaire;
-    }
-
-    public function setAnnuaire($annuaire)
+    public function setAnnuaire(array $annuaire): void
     {
         $this->annuaire = $annuaire;
         $this->annuaireSize = (CC::LETTER_BYTES + CC::LETTER_POSITION_BYTES) * count($annuaire);
     }
 
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    public function setId($id)
+    public function setId(int $id): void
     {
         $this->id = $id;
     }
 
-    public function getNext()
-    {
-        return $this->next;
-    }
-
-    public function setNext($next)
+    public function setNext(int $next): void
     {
         $this->next = $next;
     }
 
-    public function setStagePartReader(StagePartReader $stagePartReader)
+    public function setStagePartReader(StagePartReader $stagePartReader): void
     {
         $this->setAnnuaire($stagePartReader->getAnnuaire());
         $this->setId($stagePartReader->getId());
         $this->setNext($stagePartReader->getNext());
     }
 
-    public function __toString()
+    public function toString(): string
     {
-        $str = Utils::pack($this->annuaireSize, CC::ANNUAIRE_SIZE_BYTES);
+        $str = Pack::pack($this->annuaireSize, CC::ANNUAIRE_SIZE_BYTES);
 
         if (null != $this->annuaire) {
             foreach ($this->annuaire as $letter => $position) {
-                $str .= Utils::pack($letter, CC::LETTER_BYTES);
-                $str .= Utils::pack($position, CC::LETTER_POSITION_BYTES);
+                $str .= Pack::pack($letter, CC::LETTER_BYTES);
+                $str .= Pack::pack($position, CC::LETTER_POSITION_BYTES);
             }
         }
 
-        $str .= Utils::pack($this->id, CC::ID_BYTES);
-        $str .= Utils::pack($this->next, CC::NEXT_PART_BYTES);
+        $str .= Pack::pack($this->id, CC::ID_BYTES);
+        $str .= Pack::pack($this->next, CC::NEXT_PART_BYTES);
 
         return $str;
     }

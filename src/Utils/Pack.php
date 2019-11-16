@@ -2,7 +2,7 @@
 
 namespace Wamania\BrewSearch\Dictionary\Utils;
 
-class Utils
+class Pack
 {
 	public static function unpack($value, $size, $multi = false)
 	{

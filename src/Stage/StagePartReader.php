@@ -4,7 +4,7 @@ namespace Wamania\BrewSearch\Dictionary\Stage;
 
 use Wamania\BrewSearch\Dictionary\Constant as CC;
 use Wamania\BrewSearch\Dictionary\SwitchBoard;
-use Wamania\BrewSearch\Dictionary\Utils\Utils;
+use Wamania\BrewSearch\Dictionary\Utils\Pack;
 
 class StagePartReader
 {
@@ -15,19 +15,17 @@ class StagePartReader
     private $switchBoard;
 
     /**
-     * Index du stage dans le fichier
+     * Index of this stage
      * @var integer
      */
     private $index;
 
     /**
-     * Taille de l'annuaire
      * @var integer
      */
     private $annuaireSize;
 
     /**
-     * Annuaire
      * @var array
      */
     private $annuaire;
@@ -48,50 +46,45 @@ class StagePartReader
      * Has been read ?
      * @var boolean
      */
-    private $read;
+    private $readed;
 
-    /**
-     * Constructor
-     * @param integer $index Index du stage dans le fichier
-     */
-    public function __construct(SwitchBoard $switchboard, int $index)
+    public function __construct(SwitchBoard $switchBoard, int $index)
     {
-        $this->switchBoard = $switchboard;
+        $this->switchBoard = $switchBoard;
         $this->index = $index;
         $this->annuaireSize = null;
-        $this->annuaire = array();
+        $this->annuaire = [];
         $this->id = null;
         $this->next = null;
-        $this->read = false;
+        $this->readed = false;
     }
 
-    public function getAnnuaire()
+    public function getAnnuaire(): array
     {
-        if ((null === $this->annuaire) && (false === $this->read)) {
+        if ((null === $this->annuaire) && (false === $this->readed)) {
             $this->read();
         }
 
         return $this->annuaire;
     }
 
-    public function read()
+    private function read(): void
     {
         $this->readAnnuaireSize();
         $this->readAnnuaire();
         $this->readId();
         $this->readNext();
 
-        $this->read = true;
+        $this->readed = true;
     }
 
-    private function readAnnuaireSize()
+    private function readAnnuaireSize(): void
     {
         $annuaireSize = $this->switchBoard->extract($this->index, CC::ANNUAIRE_SIZE_BYTES);
-        //$annuaireSize = substr($this->catalog, $this->index, CC::ANNUAIRE_SIZE_BYTES);
-        $this->annuaireSize = Utils::unpack($annuaireSize, CC::ANNUAIRE_SIZE_BYTES);
+        $this->annuaireSize = Pack::unpack($annuaireSize, CC::ANNUAIRE_SIZE_BYTES);
     }
 
-    private function readAnnuaire()
+    private function readAnnuaire(): void
     {
         if (null === $this->annuaireSize) {
             $this->readAnnuaireSize();
@@ -99,60 +92,56 @@ class StagePartReader
 
         $this->annuaire = array();
         for ($i = 0; $i < $this->annuaireSize; $i += (CC::LETTER_BYTES + CC::LETTER_POSITION_BYTES)) {
-            //$letter = substr($this->catalog, ($catalogIndex + $i  + CC::ANNUAIRE_SIZE_BYTES), CC::LETTER_BYTES);
             $letter = $this->switchBoard->extract(($this->index + $i + CC::ANNUAIRE_SIZE_BYTES), CC::LETTER_BYTES);
-            $letter = Utils::unpack($letter, CC::LETTER_BYTES);
+            $letter = Pack::unpack($letter, CC::LETTER_BYTES);
 
-            //$position = substr($this->catalog, ($catalogIndex + $i + CC::ANNUAIRE_SIZE_BYTES + CC::LETTER_BYTES), CC::LETTER_POSITION_BYTES);
             $position = $this->switchBoard->extract(($this->index + $i + CC::ANNUAIRE_SIZE_BYTES + CC::LETTER_BYTES), CC::LETTER_POSITION_BYTES);
-            $position = Utils::unpack($position, CC::LETTER_POSITION_BYTES);
+            $position = Pack::unpack($position, CC::LETTER_POSITION_BYTES);
 
             $this->annuaire[$letter] = $position;
         }
     }
 
-    private function readId()
+    private function readId(): void
     {
-        //$id = substr($this->catalog, ($this->index + CC::ANNUAIRE_SIZE_BYTES + $this->annuaireSize), CC::ID_BYTES);
         $id = $this->switchBoard->extract(($this->index + CC::ANNUAIRE_SIZE_BYTES + $this->annuaireSize), CC::ID_BYTES);
-        $this->id = Utils::unpack($id, CC::ID_BYTES);
+        $this->id = Pack::unpack($id, CC::ID_BYTES);
     }
 
-    private function readNext()
+    private function readNext(): void
     {
-        //$next = substr($this->catalog, ($this->index + CC::ANNUAIRE_SIZE_BYTES + $this->annuaireSize + CC::ID_BYTES), CC::NEXT_PART_BYTES);
         $next = $this->switchBoard->extract(($this->index + CC::ANNUAIRE_SIZE_BYTES + $this->annuaireSize + CC::ID_BYTES), CC::NEXT_PART_BYTES);
-        $this->next = Utils::unpack($next, CC::NEXT_PART_BYTES);
+        $this->next = Pack::unpack($next, CC::NEXT_PART_BYTES);
     }
 
-    public function getAnnuaireSize()
+    public function getAnnuaireSize(): int
     {
-        if ((null === $this->annuaireSize) && (false === $this->read)) {
+        if (false === $this->readed) {
             $this->read();
         }
 
         return $this->annuaireSize;
     }
 
-    public function getId()
+    public function getId(): ?int
     {
-        if ((null === $this->id) && (false === $this->read)) {
+        if (false === $this->readed) {
             $this->read();
         }
 
         return $this->id;
     }
 
-    public function getNext()
+    public function getNext(): ?int
     {
-        if ((null === $this->next) && (false === $this->read)) {
+        if (false === $this->readed) {
             $this->read();
         }
 
         return $this->next;
     }
 
-    public function getIndex()
+    public function getIndex(): int
     {
         return $this->index;
     }

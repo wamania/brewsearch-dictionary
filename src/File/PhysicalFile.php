@@ -1,54 +1,41 @@
 <?php
+
 namespace Wamania\BrewSearch\Dictionary\File;
 
-class PhysicalFile extends File
+class PhysicalFile extends AbstractFile implements FileInterface
 {
     /**
-     * The file ressource
+     * @var resource
      */
     protected $fileHandler;
 
-    /**
-     * Constructor
-     * @param string $filePath
-     */
-    public function __construct($filePath)
+    public function __construct(string $filePath)
     {
         parent::__construct($filePath);
 
         $this->fileHandler 	= null;
     }
 
-    /**
-     * Crée une ressource sur un fichier
-     * open in r+ to allow seeking, and b for binary
-     *
-     * @return void
-     */
-    public function open($mode = 'r+b')
+    public function open(): void
     {
-        $this->fileHandler = fopen($this->filePath, $mode);
+        $this->fileHandler = fopen($this->filePath, 'r+b');
+        flock($this->fileHandler,  LOCK_SH);
     }
 
-    /**
-     * Close file ressource
-     *
-     * @return void
-     */
-    public function close()
+    public function close(): void
     {
         if (null !== $this->fileHandler) {
+            flock($this->fileHandler, LOCK_UN);
             fclose($this->fileHandler);
             $this->fileHandler = null;
         }
     }
 
-    public function flush()
+    public function flush(): void
     {
-        return true;
     }
 
-    public function reset()
+    public function reset(): void
     {
         if (null == $this->fileHandler) {
             $this->open();
@@ -56,12 +43,7 @@ class PhysicalFile extends File
         ftruncate($this->fileHandler, 0);
     }
 
-    /**
-     * Get file size
-     *
-     * @return int
-     */
-    public function getFilesize()
+    public function getFilesize(): int
     {
         if (null == $this->filePath) {
             return 0;
@@ -70,41 +52,25 @@ class PhysicalFile extends File
         return filesize($this->filePath);
     }
 
-    /**
-     * Seeks on a file pointer
-     *
-     * @param  int $position
-     * @return bool
-     */
-    public function seek($position)
+    public function seek(int $position): void
     {
         if (null == $this->fileHandler) {
             $this->open();
         }
 
-        return fseek($this->fileHandler, $position);
+        fseek($this->fileHandler, $position);
     }
 
-    /**
-     * Seek to the end
-     *
-     * @return number
-     */
-    public function seekToEnd()
+    public function seekToEnd(): void
     {
         if (null == $this->fileHandler) {
             $this->open();
         }
 
-        return fseek($this->fileHandler, 0, SEEK_END);
+        fseek($this->fileHandler, 0, SEEK_END);
     }
 
-    /**
-     * Return current position of pointer in file
-     *
-     * @return int
-     */
-    public function getPosition()
+    public function getCurrentPosition(): int
     {
         if (null === $this->fileHandler) {
             return null;
@@ -112,13 +78,7 @@ class PhysicalFile extends File
         return ftell($this->fileHandler);
     }
 
-    /**
-     * Lit et retourne un nombre $size d'octet et converti en int (S,V) ou char (C)
-     *
-     * @param  integer $size Taille en octet
-     * @return integer|string
-     */
-    public function readBytes($size)
+    public function readBytes(int $size): string
     {
         if (null == $this->fileHandler) {
             $this->open();
@@ -127,36 +87,29 @@ class PhysicalFile extends File
         return fread($this->fileHandler, $size);
     }
 
-
-    public function writeAtEnd($string)
+    public function writeAtEnd(string $bytes): void
     {
         if (null == $this->fileHandler) {
             $this->open();
         }
 
         $this->seekToEnd();
-        return $this->writeBytes($string);
+
+        $this->writeBytes($bytes);
     }
 
-    /**
-     * Write $size octets packed
-     *
-     * @param  [type] $value [description]
-     * @param  [type] $size  [description]
-     * @return [type]        [description]
-     */
-    public function writeBytes($string)
+    public function writeBytes(string $bytes): void
     {
         if (null == $this->fileHandler) {
             $this->open();
         }
 
-        return fwrite($this->fileHandler, $string);
+        if (flock($this->fileHandler,  LOCK_EX | LOCK_NB)) {
+            fwrite($this->fileHandler, $bytes);
+            flock($this->fileHandler, LOCK_UN);
+        }
     }
 
-    /**
-     * Destructor
-     */
     public function __destruct()
     {
         if (null != $this->fileHandler) {
